@@ -3,43 +3,15 @@ import './App.css';
 import React, { Component } from "react";
 import { render } from 'react-dom';
 import Modal from "./components/Modal";
+import axios from "axios";
 
-const todoItems = [
-  {
-    id:1,
-    title: "Go to Market",
-    description: "Buy ingredients for dinner",
-    completed: true,
-  },
-
-  {
-    id:2,
-    title: "study",
-    description: "Study as many materials as possible for django and react",
-    completed: false,
-  },
-
-  {
-    id:3,
-    title: "Books",
-    description: "Go and find different books on react",
-    completed: true,
-  },
-
-  {
-    id:4,
-    title: "Article",
-    description: "Write article on how to use djago with react",
-    completed: false,
-  },
-];
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       viewCompleted: false,
-      todoList: todoItems,
+      todoList: [],
       modal: false,
       activeItem: {
         title: "",
@@ -49,6 +21,14 @@ class App extends Component {
     };
   }
 
+  componentDidMount() {
+    this.refreshList();
+  }
+
+  refreshList = () => {
+    axios.get("/api/todos").then((res) => this.setState({ todoList: res.data})).catch((err) => console.log(err));
+  };
+
   toggle = () => {
     this.setState({ modal: !this.state.modal });
   };
@@ -56,11 +36,18 @@ class App extends Component {
   handleSubmit = (item) => {
     this.toggle();
 
-    alert("save" + JSON.stringify(item));
+    if (item.id){
+      axios.put('/api/todos/${item.id}/', item).then((res)=> this.refreshList());
+      return;
+    }
+    axios.post("/api/todos", item).then((res)=> this.refreshList());
+
+    // alert("save" + JSON.stringify(item));
   };
 
   handleDelete = (item) => {
-    alert("delete" + JSON.stringify(item));
+    axios.delete('/api/todos/${item.id}/').then((res)=> this.refreshList());
+    // alert("delete" + JSON.stringify(item));
   };
 
   createItem = () => {
@@ -85,12 +72,12 @@ class App extends Component {
       <div className="nav nav-tabs">
         <span
           className={this.state.viewCompleted ? "nav-lin active" : "nav-link"}
-          onClick={ () => this.displayCompleted(true)}>
+          onClick={() => this.displayCompleted(true)}>
           Complete
         </span>
         <span 
           className={this.state.viewCompleted ? "nav-link": "nav-link active"}
-          onClick={ () => this.displayCompleted(false)}>
+          onClick={() => this.displayCompleted(false)}>
             Incomplete
           </span>
       </div>
